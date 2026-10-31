@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<StartupServices xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Parameters>
+    <Parameter Name="EventDispatcherService_PartitionCount" Value="1" />
+    <Parameter Name="EventDispatcherService_MinReplicaSetSize" Value="3" />
+    <Parameter Name="EventDispatcherService_TargetReplicaSetSize" Value="3" />
+    <Parameter Name="BankService_PartitionCount" Value="1" />
+    <Parameter Name="BankService_MinReplicaSetSize" Value="3" />
+    <Parameter Name="BankService_TargetReplicaSetSize" Value="3" />
+    <Parameter Name="LibraryService_PartitionCount" Value="1" />
+    <Parameter Name="LibraryService_MinReplicaSetSize" Value="3" />
+    <Parameter Name="LibraryService_TargetReplicaSetSize" Value="3" />
+    <Parameter Name="BackendSF_InstanceCount" Value="-1" />
+    <Parameter Name="ValidatorService_InstanceCount" Value="-1" />
+  </Parameters>
+</StartupServices>

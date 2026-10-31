@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Application xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="fabric:/MiniProjekat" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Parameters>
+    <Parameter Name="EventDispatcherService_ASPNETCORE_ENVIRONMENT" Value="Development" />
+    <Parameter Name="BankService_ASPNETCORE_ENVIRONMENT" Value="Development" />
+    <Parameter Name="LibraryService_ASPNETCORE_ENVIRONMENT" Value="Development" />
+    <Parameter Name="BackendSF_ASPNETCORE_ENVIRONMENT" Value="Development" />
+    <Parameter Name="ValidatorService_ASPNETCORE_ENVIRONMENT" Value="Development" />
+  </Parameters>
+</Application>
