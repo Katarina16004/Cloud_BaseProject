@@ -14,5 +14,8 @@ namespace ClassLibrary
 
         Task<List<Customer>> GetAllCustomersAsync();
         //Task AddDataAsync();
+        Task<long> GetCountAsync();
+
+        Task AddCustomerAsync(Customer customer);
     }
 }

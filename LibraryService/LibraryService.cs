@@ -127,6 +127,26 @@ namespace LibraryService
 
             return list;
         }
+        public async Task<long> GetCountAsync()
+        {
+            var dict = await GetDict();
+            using var tx = StateManager.CreateTransaction();
+            return await dict.GetCountAsync(tx);
+        }
+        public async Task AddBookAsync(Book book)
+        {
+            var dict = await GetDict();
+
+            using var tx = StateManager.CreateTransaction();
+
+            var existing = await dict.TryGetValueAsync(tx, book.Name);
+
+            if (!existing.HasValue)
+            {
+                await dict.AddAsync(tx, book.Name, book);
+                await tx.CommitAsync();
+            }
+        }
 
         /// <summary>
         /// Optional override to create listeners (like tcp, http) for this service instance.

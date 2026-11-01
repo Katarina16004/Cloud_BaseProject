@@ -8,7 +8,9 @@
     <Parameter Name="ValidatorService_ASPNETCORE_ENVIRONMENT" DefaultValue="" />
   </Parameters>
   <!-- Import the ServiceManifest from the ServicePackage. The ServiceManifestName and ServiceManifestVersion 
+
        should match the Name and Version attributes of the ServiceManifest element defined in the 
+
        ServiceManifest.xml file. -->
   <ServiceManifestImport>
     <ServiceManifestRef ServiceManifestName="EventDispatcherServicePkg" ServiceManifestVersion="1.0.0" />

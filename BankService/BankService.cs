@@ -1,19 +1,14 @@
+using ClassLibrary;
+using Microsoft.ServiceFabric.Data;
+using Microsoft.ServiceFabric.Data.Collections;
+using Microsoft.ServiceFabric.Services.Communication.Runtime;
+using Microsoft.ServiceFabric.Services.Remoting.Runtime;
+using Microsoft.ServiceFabric.Services.Runtime;
 using System;
 using System.Collections.Generic;
 using System.Fabric;
-using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
-using Microsoft.ServiceFabric.Services.Communication.Runtime;
-using Microsoft.ServiceFabric.Services.Runtime;
-using Microsoft.ServiceFabric.Data;
-using Microsoft.ServiceFabric.Data.Collections;
-using Microsoft.ServiceFabric.Services.Remoting.Runtime;
-using ClassLibrary;
 
 namespace BankService
 {
@@ -22,11 +17,14 @@ namespace BankService
         private const string DictionaryName = "accounts";
 
         public BankService(StatefulServiceContext context)
-            : base(context) { }
+            : base(context)
+        {
+        }
 
         private async Task<IReliableDictionary<string, Customer>> GetDictionary()
         {
-            return await StateManager.GetOrAddAsync<IReliableDictionary<string, Customer>>(DictionaryName);
+            return await StateManager.GetOrAddAsync
+                <IReliableDictionary<string, Customer>>(DictionaryName);
         }
 
         private async Task AddDataAsync()
@@ -35,23 +33,42 @@ namespace BankService
 
             using (var tx = StateManager.CreateTransaction())
             {
-                var cust1 = await dict.TryGetValueAsync(tx, "1");
-                if (!cust1.HasValue)
+                var customer1 = await dict.TryGetValueAsync(
+                    tx,
+                    "veljkovickatarina56@gmail.com");
+
+                if (!customer1.HasValue)
                 {
-                    await dict.AddAsync(tx, "1", new Customer(1, "veljkovickatarina56@gmail.com", 600));
+                    await dict.AddAsync(
+                        tx,
+                        "veljkovickatarina56@gmail.com",
+                        new Customer(
+                            1,
+                            "veljkovickatarina56@gmail.com",
+                            600));
                 }
 
-                var cust2 = await dict.TryGetValueAsync(tx, "2");
-                if (!cust2.HasValue)
+                var customer2 = await dict.TryGetValueAsync(
+                    tx,
+                    "veljkovic.pr33.2022@uns.ac.rs");
+
+                if (!customer2.HasValue)
                 {
-                    await dict.AddAsync(tx, "2", new Customer(2, "veljkovic.pr33.2022@uns.ac.rs", 500));
+                    await dict.AddAsync(
+                        tx,
+                        "veljkovic.pr33.2022@uns.ac.rs",
+                        new Customer(
+                            2,
+                            "veljkovic.pr33.2022@uns.ac.rs",
+                            500));
                 }
 
                 await tx.CommitAsync();
             }
         }
 
-        protected override async Task RunAsync(CancellationToken cancellationToken)
+        protected override async Task RunAsync(
+            CancellationToken cancellationToken)
         {
             try
             {
@@ -70,27 +87,39 @@ namespace BankService
             }
         }
 
-        public async Task<bool> HasEnoughMoney(string userId, double amount)
+        public async Task<bool> HasEnoughMoney(
+            string userId,
+            double amount)
         {
             var dict = await GetDictionary();
-            using var tx = StateManager.CreateTransaction();
-            var result = await dict.TryGetValueAsync(tx, userId);
 
-            return result.HasValue && result.Value.Balance >= amount;
+            using (var tx = StateManager.CreateTransaction())
+            {
+                var result = await dict.TryGetValueAsync(tx, userId);
+
+                return result.HasValue &&
+                       result.Value.Balance >= amount;
+            }
         }
 
-        public async Task Withdraw(string userId, double amount)
+        public async Task Withdraw(
+            string userId,
+            double amount)
         {
             var dict = await GetDictionary();
-            using var tx = StateManager.CreateTransaction();
-            var result = await dict.TryGetValueAsync(tx, userId);
 
-            if (result.HasValue)
+            using (var tx = StateManager.CreateTransaction())
             {
-                var customer = result.Value;
-                customer.Balance -= amount;
-                await dict.SetAsync(tx, userId, customer);
-                await tx.CommitAsync();
+                var result = await dict.TryGetValueAsync(tx, userId);
+
+                if (result.HasValue)
+                {
+                    var customer = result.Value;
+                    customer.Balance -= amount;
+
+                    await dict.SetAsync(tx, userId, customer);
+                    await tx.CommitAsync();
+                }
             }
         }
 
@@ -104,7 +133,8 @@ namespace BankService
                 var enumerable = await dict.CreateEnumerableAsync(tx);
                 var enumerator = enumerable.GetAsyncEnumerator();
 
-                while (await enumerator.MoveNextAsync(CancellationToken.None))
+                while (await enumerator.MoveNextAsync(
+                    CancellationToken.None))
                 {
                     list.Add(enumerator.Current.Value);
                 }
@@ -113,7 +143,47 @@ namespace BankService
             return list;
         }
 
-        protected override IEnumerable<ServiceReplicaListener> CreateServiceReplicaListeners()
+        public async Task<long> GetCountAsync()
+        {
+            var dict = await GetDictionary();
+
+            using (var tx = StateManager.CreateTransaction())
+            {
+                return await dict.GetCountAsync(tx);
+            }
+        }
+
+        public async Task AddCustomerAsync(Customer customer)
+        {
+            if (customer == null ||
+                string.IsNullOrWhiteSpace(customer.Account))
+            {
+                throw new ArgumentException(
+                    "Customer account is required.");
+            }
+
+            var dict = await GetDictionary();
+
+            using (var tx = StateManager.CreateTransaction())
+            {
+                var existing = await dict.TryGetValueAsync(
+                    tx,
+                    customer.Account);
+
+                if (!existing.HasValue)
+                {
+                    await dict.AddAsync(
+                        tx,
+                        customer.Account,
+                        customer);
+
+                    await tx.CommitAsync();
+                }
+            }
+        }
+
+        protected override IEnumerable<ServiceReplicaListener>
+            CreateServiceReplicaListeners()
         {
             return this.CreateServiceRemotingReplicaListeners();
         }

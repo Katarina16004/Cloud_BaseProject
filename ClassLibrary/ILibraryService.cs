@@ -14,6 +14,8 @@ namespace ClassLibrary
         Task<bool> HasStock(string bookName, int qty);
         Task DecreaseStock(string bookName, int qty);
         Task<List<Book>> GetAllBooksAsync();
+        Task<long> GetCountAsync();
 
+        Task AddBookAsync(Book book);
     }
 }
