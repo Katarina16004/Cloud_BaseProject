@@ -123,6 +123,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Book.cs" />
+    <Compile Include="ConsistencyResult.cs" />
     <Compile Include="Customer.cs" />
     <Compile Include="IBankService.cs" />
     <Compile Include="IEventDispatcherService.cs" />
@@ -133,6 +134,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PurchaseEvent.cs" />
     <Compile Include="PurchaseRequestDto.cs" />
+    <Compile Include="Reservation.cs" />
+    <Compile Include="ReservationStatus.cs" />
     <Compile Include="ValidationResultDto.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -1,31 +1,100 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Runtime.Serialization;
 
 namespace ClassLibrary
 {
+    [DataContract]
     public class Book
     {
-        public int BookId { get; set; }
-        public string Author { get; set; }
+        [DataMember]
+        public int BookId { get; private set; }
 
-        public string Name { get; set; } 
+        [DataMember]
+        public string Author { get; private set; }
 
-        public double Price { get; set; }
+        [DataMember]
+        public string Name { get; private set; }
 
-        public int Quantity { get; set; }
+        [DataMember]
+        public double Price { get; private set; }
 
-        public Book() { }
+        [DataMember]
+        public int Quantity { get; private set; }
 
-        public Book(int id, string author, string name, double price, int quantity)
+        [DataMember]
+        public int Reserved { get; private set; }
+
+        [DataMember]
+        public int InitialQuantity { get; private set; }
+
+        private Book()
         {
-            BookId = id;
+        }
+
+        public Book(
+            int bookId,
+            string author,
+            string name,
+            double price,
+            int quantity)
+            : this(
+                bookId,
+                author,
+                name,
+                price,
+                quantity,
+                0,
+                quantity)
+        {
+        }
+
+        public Book(
+            int bookId,
+            string author,
+            string name,
+            double price,
+            int quantity,
+            int reserved)
+            : this(
+                bookId,
+                author,
+                name,
+                price,
+                quantity,
+                reserved,
+                quantity + reserved)
+        {
+        }
+
+        private Book(
+            int bookId,
+            string author,
+            string name,
+            double price,
+            int quantity,
+            int reserved,
+            int initialQuantity)
+        {
+            BookId = bookId;
             Author = author;
             Name = name;
             Price = price;
             Quantity = quantity;
+            Reserved = reserved;
+            InitialQuantity = initialQuantity;
+        }
+
+        public Book WithStockAndReserved(
+            int quantity,
+            int reserved)
+        {
+            return new Book(
+                BookId,
+                Author,
+                Name,
+                Price,
+                quantity,
+                reserved,
+                InitialQuantity);
         }
     }
 }

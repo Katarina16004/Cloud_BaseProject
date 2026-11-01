@@ -17,5 +17,13 @@ namespace ClassLibrary
         Task<long> GetCountAsync();
 
         Task AddBookAsync(Book book);
+       
+        Task<double> ReserveAsync(
+            Guid txId,
+            int bookId,
+            string bookName,
+            int quantity);
+        Task<ConsistencyResult> GetConsistencyAsync(
+            int bookId);
     }
 }
