@@ -43,57 +43,11 @@ namespace LibraryService
                     ReservationDictionaryName);
         }
 
-        private async Task AddDataAsync()
-        {
-            var dict = await GetDict();
 
-            using (var tx = StateManager.CreateTransaction())
-            {
-                var book1 = await dict.TryGetValueAsync(
-                    tx,
-                    "Orkanski visovi");
-
-                if (!book1.HasValue)
-                {
-                    await dict.AddAsync(
-                        tx,
-                        "Orkanski visovi",
-                        new Book(
-                            1,
-                            "Emili Bronte",
-                            "Orkanski visovi",
-                            400,
-                            1000));
-                }
-
-                var book2 = await dict.TryGetValueAsync(
-                    tx,
-                    "Zlocin i kazna");
-
-                if (!book2.HasValue)
-                {
-                    await dict.AddAsync(
-                        tx,
-                        "Zlocin i kazna",
-                        new Book(
-                            2,
-                            "Fjodor Dostojevski",
-                            "Zlocin i kazna",
-                            150,
-                            5));
-                }
-
-                await tx.CommitAsync();
-            }
-        }
-
-        protected override async Task RunAsync(
-            CancellationToken cancellationToken)
+        protected override async Task RunAsync(CancellationToken cancellationToken)
         {
             try
             {
-                await AddDataAsync();
-
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     await Task.Delay(
@@ -103,8 +57,12 @@ namespace LibraryService
             }
             catch (Exception ex)
             {
-                Console.WriteLine("LS RUNASYNC ERROR:");
-                Console.WriteLine(ex.ToString());
+                Console.WriteLine(
+                    "LS RUNASYNC ERROR:");
+
+                Console.WriteLine(
+                    ex.ToString());
+
                 throw;
             }
         }

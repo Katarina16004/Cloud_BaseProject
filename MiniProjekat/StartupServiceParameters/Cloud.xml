@@ -4,10 +4,10 @@
     <Parameter Name="EventDispatcherService_PartitionCount" Value="1" />
     <Parameter Name="EventDispatcherService_MinReplicaSetSize" Value="3" />
     <Parameter Name="EventDispatcherService_TargetReplicaSetSize" Value="3" />
-    <Parameter Name="BankService_PartitionCount" Value="1" />
+    <Parameter Name="BankService_PartitionCount" Value="4" />
     <Parameter Name="BankService_MinReplicaSetSize" Value="3" />
     <Parameter Name="BankService_TargetReplicaSetSize" Value="3" />
-    <Parameter Name="LibraryService_PartitionCount" Value="1" />
+    <Parameter Name="LibraryService_PartitionCount" Value="4" />
     <Parameter Name="LibraryService_MinReplicaSetSize" Value="3" />
     <Parameter Name="LibraryService_TargetReplicaSetSize" Value="3" />
     <Parameter Name="BackendSF_InstanceCount" Value="-1" />

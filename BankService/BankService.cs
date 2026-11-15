@@ -27,62 +27,25 @@ namespace BankService
                 <IReliableDictionary<string, Customer>>(DictionaryName);
         }
 
-        private async Task AddDataAsync()
-        {
-            var dict = await GetDictionary();
-
-            using (var tx = StateManager.CreateTransaction())
-            {
-                var customer1 = await dict.TryGetValueAsync(
-                    tx,
-                    "veljkovickatarina56@gmail.com");
-
-                if (!customer1.HasValue)
-                {
-                    await dict.AddAsync(
-                        tx,
-                        "veljkovickatarina56@gmail.com",
-                        new Customer(
-                            1,
-                            "veljkovickatarina56@gmail.com",
-                            600));
-                }
-
-                var customer2 = await dict.TryGetValueAsync(
-                    tx,
-                    "veljkovic.pr33.2022@uns.ac.rs");
-
-                if (!customer2.HasValue)
-                {
-                    await dict.AddAsync(
-                        tx,
-                        "veljkovic.pr33.2022@uns.ac.rs",
-                        new Customer(
-                            2,
-                            "veljkovic.pr33.2022@uns.ac.rs",
-                            500));
-                }
-
-                await tx.CommitAsync();
-            }
-        }
-
-        protected override async Task RunAsync(
-            CancellationToken cancellationToken)
+        protected override async Task RunAsync(CancellationToken cancellationToken)
         {
             try
             {
-                await AddDataAsync();
-
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    await Task.Delay(1000, cancellationToken);
+                    await Task.Delay(
+                        1000,
+                        cancellationToken);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("BS RUNASYNC ERROR:");
-                Console.WriteLine(ex.ToString());
+                Console.WriteLine(
+                    "BS RUNASYNC ERROR:");
+
+                Console.WriteLine(
+                    ex.ToString());
+
                 throw;
             }
         }
