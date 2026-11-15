@@ -187,10 +187,10 @@ namespace LibraryService
         }
 
         public async Task<double> ReserveAsync(
-            Guid txId,
-            int bookId,
-            string bookName,
-            int quantity)
+    Guid txId,
+    int bookId,
+    string bookName,
+    int quantity)
         {
             if (quantity <= 0)
             {

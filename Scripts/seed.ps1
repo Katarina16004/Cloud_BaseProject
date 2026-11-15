@@ -7,7 +7,7 @@ foreach ($i in 1..20) {
         bookId = "$i"
         title = "Knjiga $i"
         price = 10 + $i
-        stock = 50
+        stock = if ($i -eq 1) { 1000 } else { 50 }
     }
 
     Invoke-RestMethod `

@@ -14,8 +14,8 @@ namespace BackendSF.Controllers
     {
         [HttpPost("books/{bookId}/reservations")]
         public async Task<IActionResult> ReserveBook(
-            int bookId,
-            [FromBody] ReservationRequest request)
+    int bookId,
+    [FromBody] ReservationRequest request)
         {
             if (request == null ||
                 request.Quantity <= 0)
@@ -77,7 +77,7 @@ namespace BackendSF.Controllers
 
         [HttpGet("books/{bookId}/consistency")]
         public async Task<IActionResult> GetConsistency(
-            int bookId)
+    int bookId)
         {
             try
             {
