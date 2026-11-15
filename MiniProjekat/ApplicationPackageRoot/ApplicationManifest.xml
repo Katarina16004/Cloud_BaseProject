@@ -13,6 +13,14 @@
 
        ServiceManifest.xml file. -->
   <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="ReportServicePkg" ServiceManifestVersion="1.0.0" />
+    <ConfigOverrides />
+  </ServiceManifestImport>
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="PurchaseOrchestratorPkg" ServiceManifestVersion="1.0.0" />
+    <ConfigOverrides />
+  </ServiceManifestImport>
+  <ServiceManifestImport>
     <ServiceManifestRef ServiceManifestName="EventDispatcherServicePkg" ServiceManifestVersion="1.0.0" />
     <ConfigOverrides />
     <EnvironmentOverrides CodePackageRef="code">

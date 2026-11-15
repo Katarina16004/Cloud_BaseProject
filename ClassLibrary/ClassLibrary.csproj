@@ -123,19 +123,26 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Book.cs" />
+    <Compile Include="Charge.cs" />
+    <Compile Include="ChargeStatus.cs" />
     <Compile Include="ConsistencyResult.cs" />
     <Compile Include="Customer.cs" />
     <Compile Include="IBankService.cs" />
     <Compile Include="IEventDispatcherService.cs" />
     <Compile Include="ILibraryService.cs" />
+    <Compile Include="IPurchaseOrchestratorService.cs" />
+    <Compile Include="IReportService.cs" />
     <Compile Include="IValidatorService.cs" />
     <Compile Include="PartitionKeyHelper.cs" />
     <Compile Include="PartitionKeys.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PurchaseEvent.cs" />
     <Compile Include="PurchaseRequestDto.cs" />
+    <Compile Include="PurchaseSaga.cs" />
+    <Compile Include="PurchaseStatus.cs" />
     <Compile Include="Reservation.cs" />
     <Compile Include="ReservationStatus.cs" />
+    <Compile Include="SaleConfirmed.cs" />
     <Compile Include="ValidationResultDto.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -15,6 +15,14 @@ namespace ClassLibrary
         Task<List<Customer>> GetAllCustomersAsync();
         //Task AddDataAsync();
         Task<long> GetCountAsync();
+        Task ChargeAsync(
+    Guid txId,
+    string userId,
+    double amount);
+
+        Task RefundAsync(
+            Guid txId,
+            string userId);
 
         Task AddCustomerAsync(Customer customer);
     }

@@ -11,93 +11,158 @@ using System.Threading.Tasks;
 
 namespace ValidatorService
 {
-    internal sealed class ValidatorService : StatelessService, IValidatorService
+    internal sealed class ValidatorService :
+        StatelessService,
+        IValidatorService
     {
-        public ValidatorService(StatelessServiceContext context)
+        private static readonly Uri LibraryServiceUri =
+            new Uri("fabric:/MiniProjekat/LibraryService");
+
+        private static readonly Uri BankServiceUri =
+            new Uri("fabric:/MiniProjekat/BankService");
+
+        private static readonly Uri PurchaseOrchestratorUri =
+            new Uri("fabric:/MiniProjekat/PurchaseOrchestrator");
+
+        public ValidatorService(
+            StatelessServiceContext context)
             : base(context)
         {
         }
 
-        public async Task<ValidationResultDto> ValidatePurchaseAsync(
-            PurchaseRequestDto request)
+        public async Task<ValidationResultDto>
+            ValidatePurchaseAsync(
+                PurchaseRequestDto request)
         {
-            var libraryProxy = ServiceProxy.Create<ILibraryService>(
-                new Uri("fabric:/MiniProjekat/LibraryService"),
-                new ServicePartitionKey(
-                    PartitionKeys.ForBook(request.BookId)));
+            if (request == null)
+            {
+                return Invalid("Request is required.");
+            }
 
-            var bankProxy = ServiceProxy.Create<IBankService>(
-                new Uri("fabric:/MiniProjekat/BankService"),
-                new ServicePartitionKey(
-                    PartitionKeys.ForAccount(request.UserId)));
+            if (string.IsNullOrWhiteSpace(request.UserId))
+            {
+                return Invalid("UserId is required.");
+            }
 
-            Book book = await libraryProxy.BookExists(request.Name.Trim());
+            if (request.BookId <= 0)
+            {
+                return Invalid("BookId must be positive.");
+            }
+
+            if (request.Quantity <= 0)
+            {
+                return Invalid(
+                    "Quantity must be greater than zero.");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Name))
+            {
+                return Invalid("Book name is required.");
+            }
+
+            var libraryProxy =
+                ServiceProxy.Create<ILibraryService>(
+                    LibraryServiceUri,
+                    new ServicePartitionKey(
+                        PartitionKeys.ForBook(
+                            request.BookId)));
+
+            var bankProxy =
+                ServiceProxy.Create<IBankService>(
+                    BankServiceUri,
+                    new ServicePartitionKey(
+                        PartitionKeys.ForAccount(
+                            request.UserId)));
+
+            var book =
+                await libraryProxy.BookExists(
+                    request.Name.Trim());
 
             if (book == null)
             {
-                return new ValidationResultDto
-                {
-                    IsValid = false,
-                    Message = "Book not found"
-                };
+                return Invalid("Book not found.");
             }
 
-            bool hasStock = await libraryProxy.HasStock(
-                request.Name,
-                request.Quantity);
+            if (book.BookId != request.BookId)
+            {
+                return Invalid(
+                    "Book ID does not match book name.");
+            }
+
+            var hasStock =
+                await libraryProxy.HasStock(
+                    request.Name.Trim(),
+                    request.Quantity);
 
             if (!hasStock)
             {
-                return new ValidationResultDto
-                {
-                    IsValid = false,
-                    Message = "Not enough stock"
-                };
+                return Invalid("Not enough stock.");
             }
 
-            double totalPrice = book.Price * request.Quantity;
+            var totalPrice =
+                book.Price * request.Quantity;
 
-            bool hasMoney = await bankProxy.HasEnoughMoney(
-                request.UserId,
-                totalPrice);
+            var hasMoney =
+                await bankProxy.HasEnoughMoney(
+                    request.UserId,
+                    totalPrice);
 
             if (!hasMoney)
             {
-                return new ValidationResultDto
-                {
-                    IsValid = false,
-                    Message = "Not enough money. Total required: " + totalPrice
-                };
+                return Invalid(
+                    "Not enough money. Total required: " +
+                    totalPrice);
             }
 
-            await bankProxy.Withdraw(request.UserId, totalPrice);
-            await libraryProxy.DecreaseStock(request.Name, request.Quantity);
+            /*
+             * Validator više ne poziva Withdraw, DecreaseStock
+             * niti EventDispatcherService.
+             *
+             * Umesto toga pokreće trajnu sagu.
+             */
+            var purchaseId = Guid.NewGuid();
 
-            var dispatcher = ServiceProxy.Create<IEventDispatcherService>(
-                new Uri("fabric:/MiniProjekat/EventDispatcherService"),
-                new ServicePartitionKey(0));
+            var orchestratorProxy =
+                ServiceProxy.Create<
+                    IPurchaseOrchestratorService>(
+                        PurchaseOrchestratorUri,
+                        new ServicePartitionKey(
+                            PartitionKeyHelper
+                                .ForPurchase(purchaseId)));
+
+            await orchestratorProxy.StartPurchaseAsync(
+                purchaseId,
+                request.UserId,
+                request.BookId,
+                request.Quantity);
 
             request.Price = book.Price;
-
-            await dispatcher.PublishAsync(new PurchaseEvent
-            {
-                Message = "Uspesna kupovina!",
-                Timestamp = DateTime.UtcNow,
-                ServiceSource = "ValidatorService",
-                PurchaseRequest = request
-            });
 
             return new ValidationResultDto
             {
                 IsValid = true,
-                Message = "Purchase successful"
+                Message =
+                    "Purchase saga started. PurchaseId: " +
+                    purchaseId
             };
         }
 
-        protected override IEnumerable<ServiceInstanceListener>
+        private static ValidationResultDto Invalid(
+            string message)
+        {
+            return new ValidationResultDto
+            {
+                IsValid = false,
+                Message = message
+            };
+        }
+
+        protected override
+            IEnumerable<ServiceInstanceListener>
             CreateServiceInstanceListeners()
         {
-            return this.CreateServiceRemotingInstanceListeners();
+            return this
+                .CreateServiceRemotingInstanceListeners();
         }
     }
 }

@@ -38,5 +38,16 @@ namespace ClassLibrary
             Price = price;
             Status = status;
         }
+
+        public Reservation WithStatus(
+            string status)
+        {
+            return new Reservation(
+                TxId,
+                BookId,
+                Quantity,
+                Price,
+                status);
+        }
     }
 }

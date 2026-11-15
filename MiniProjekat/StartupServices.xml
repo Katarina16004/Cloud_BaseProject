@@ -1,6 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <StartupServicesManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/2011/01/fabric">
   <Parameters>
+    <Parameter Name="ReportService_MinReplicaSetSize" DefaultValue="3" />
+    <Parameter Name="ReportService_PartitionCount" DefaultValue="1" />
+    <Parameter Name="ReportService_TargetReplicaSetSize" DefaultValue="3" />
+    <Parameter Name="PurchaseOrchestrator_MinReplicaSetSize" DefaultValue="3" />
+    <Parameter Name="PurchaseOrchestrator_PartitionCount" DefaultValue="4" />
+    <Parameter Name="PurchaseOrchestrator_TargetReplicaSetSize" DefaultValue="3" />
     <Parameter Name="EventDispatcherService_MinReplicaSetSize" DefaultValue="3" />
     <Parameter Name="EventDispatcherService_PartitionCount" DefaultValue="1" />
     <Parameter Name="EventDispatcherService_TargetReplicaSetSize" DefaultValue="3" />
@@ -14,6 +20,16 @@
     <Parameter Name="ValidatorService_InstanceCount" DefaultValue="-1" />
   </Parameters>
   <Services>
+    <Service Name="ReportService" ServicePackageActivationMode="ExclusiveProcess">
+      <StatefulService ServiceTypeName="ReportServiceType" TargetReplicaSetSize="[ReportService_TargetReplicaSetSize]" MinReplicaSetSize="[ReportService_MinReplicaSetSize]">
+        <UniformInt64Partition PartitionCount="[ReportService_PartitionCount]" LowKey="-9223372036854775808" HighKey="9223372036854775807" />
+      </StatefulService>
+    </Service>
+    <Service Name="PurchaseOrchestrator" ServicePackageActivationMode="ExclusiveProcess">
+      <StatefulService ServiceTypeName="PurchaseOrchestratorType" TargetReplicaSetSize="[PurchaseOrchestrator_TargetReplicaSetSize]" MinReplicaSetSize="[PurchaseOrchestrator_MinReplicaSetSize]">
+        <UniformInt64Partition PartitionCount="[PurchaseOrchestrator_PartitionCount]" LowKey="-9223372036854775808" HighKey="9223372036854775807" />
+      </StatefulService>
+    </Service>
     <Service Name="EventDispatcherService" ServicePackageActivationMode="ExclusiveProcess">
       <StatefulService ServiceTypeName="EventDispatcherServiceType" TargetReplicaSetSize="[EventDispatcherService_TargetReplicaSetSize]" MinReplicaSetSize="[EventDispatcherService_MinReplicaSetSize]">
         <UniformInt64Partition PartitionCount="[EventDispatcherService_PartitionCount]" LowKey="-9223372036854775808" HighKey="9223372036854775807" />

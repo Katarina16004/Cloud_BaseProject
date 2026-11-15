@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import axios from 'axios'
 import bookLogo from '/logo.png'
 import './App.css'
-import axios from 'axios'
+
+const API_URL = 'http://localhost:8939/api'
 
 function App() {
   const [books, setBooks] = useState([])
@@ -12,98 +14,254 @@ function App() {
   const [quantity, setQuantity] = useState(1)
   const [account, setAccount] = useState('')
   const [userId, setUserId] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [purchaseStatus, setPurchaseStatus] = useState('')
 
   useEffect(() => {
-    axios.get(
-      'http://localhost:8939/api/BackendSF/books'
-    )
-      .then((response) => {
-        setBooks(response.data)
-
-        if (response.data.length > 0) {
-          setSelectedBookName(response.data[0].name)
-          setAuthor(response.data[0].author)
-        }
-      })
-      .catch((err) => {
-        console.error('Greška pri učitavanju knjiga:', err)
-      })
-
-    axios.get(
-      'http://localhost:8939/api/BackendSF/accounts'
-    )
-      .then((response) => {
-        setAccountOptions(response.data)
-
-        if (response.data.length > 0) {
-          const firstAcc = response.data[0]
-          const firstAccount =
-            firstAcc.account || firstAcc.Account
-
-          setAccount(firstAccount)
-          setUserId(firstAccount)
-        }
-      })
-      .catch((err) => {
-        console.error('Greška pri učitavanju naloga:', err)
-      })
+    loadBooks()
+    loadAccounts()
   }, [])
 
-  const handleBookChange = (e) => {
-    const bookName = e.target.value
-    setSelectedBookName(bookName)
+  const loadBooks = async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/BackendSF/books`
+      )
 
-    const foundBook = books.find(
-      (book) => book.name === bookName
-    )
+      setBooks(response.data)
 
-    if (foundBook) {
-      setAuthor(foundBook.author)
+      if (response.data.length > 0) {
+        setSelectedBookName(response.data[0].name)
+        setAuthor(response.data[0].author)
+      }
+    } catch (error) {
+      console.error(
+        'Greška pri učitavanju knjiga:',
+        error
+      )
     }
   }
 
-  const handleAccountChange = (e) => {
-    const selectedAccount = e.target.value
+  const loadAccounts = async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/BackendSF/accounts`
+      )
+
+      setAccountOptions(response.data)
+
+      if (response.data.length > 0) {
+        const firstAccount = response.data[0]
+        const accountValue =
+          firstAccount.account ||
+          firstAccount.Account
+
+        setAccount(accountValue)
+        setUserId(accountValue)
+      }
+    } catch (error) {
+      console.error(
+        'Greška pri učitavanju naloga:',
+        error
+      )
+    }
+  }
+
+  const handleBookChange = (event) => {
+    const bookName = event.target.value
+
+    setSelectedBookName(bookName)
+
+    const selectedBook = books.find(
+      (book) => book.name === bookName
+    )
+
+    if (selectedBook) {
+      setAuthor(selectedBook.author)
+    }
+  }
+
+  const handleAccountChange = (event) => {
+    const selectedAccount = event.target.value
+
     setAccount(selectedAccount)
     setUserId(selectedAccount)
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const isTransientError = (error) => {
+    if (!error.response) {
+      return true
+    }
+
+    return error.response.status >= 500 ||
+      error.response.status === 429
+  }
+
+  const wait = (milliseconds) => {
+    return new Promise((resolve) => {
+      setTimeout(resolve, milliseconds)
+    })
+  }
+
+  const startPurchaseWithRetry = async (
+    purchaseId,
+    selectedBook
+  ) => {
+    const requestBody = {
+      userId,
+      bookId: selectedBook.bookId,
+      quantity
+    }
+
+    const maxRetries = 3
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await axios.post(
+          `${API_URL}/purchases`,
+          requestBody,
+          {
+            headers: {
+              'Idempotency-Key': purchaseId
+            }
+          }
+        )
+      } catch (error) {
+        const canRetry =
+          isTransientError(error) &&
+          attempt < maxRetries
+
+        if (!canRetry) {
+          throw error
+        }
+
+        const delay =
+          500 * Math.pow(2, attempt)
+
+        await wait(delay)
+      }
+    }
+
+    throw new Error(
+      'Kupovina nije pokrenuta.'
+    )
+  }
+
+  const waitForPurchase = async (purchaseId) => {
+    const maxChecks = 30
+
+    for (let attempt = 0; attempt < maxChecks; attempt++) {
+      await wait(1000)
+
+      const response = await axios.get(
+        `${API_URL}/purchases/${purchaseId}`
+      )
+
+      const purchase = response.data
+      setPurchaseStatus(purchase.status)
+
+      if (
+        purchase.status === 'Completed' ||
+        purchase.status === 'Compensated' ||
+        purchase.status === 'Failed' ||
+        purchase.status === 4 ||
+        purchase.status === 6 ||
+        purchase.status === 7
+      ) {
+        return purchase
+      }
+    }
+
+    throw new Error(
+      'Praćenje kupovine je isteklo.'
+    )
+  }
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
 
     const selectedBook = books.find(
       (book) => book.name === selectedBookName
     )
 
     if (!selectedBook) {
-      alert('Book not found')
+      alert('Knjiga nije pronađena.')
       return
     }
 
+    if (!userId) {
+      alert('Korisnički nalog nije izabran.')
+      return
+    }
+
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      alert('Količina mora biti pozitivan ceo broj.')
+      return
+    }
+
+    const purchaseId = crypto.randomUUID()
+
+    setIsSubmitting(true)
+    setPurchaseStatus('Started')
+
     try {
-      const response = await axios.post(
-        'http://localhost:8939/api/BackendSF/purchase',
-        {
-          bookId: selectedBook.bookId,
-          name: selectedBook.name,
-          author: selectedBook.author,
-          quantity,
-          account,
-          userId
-        }
+      await startPurchaseWithRetry(
+        purchaseId,
+        selectedBook
       )
 
-      if (response.data.isValid === false) {
+      const purchase =
+        await waitForPurchase(purchaseId)
+
+      const finalStatus = purchase.status
+
+      if (
+        finalStatus === 'Completed' ||
+        finalStatus === 4
+      ) {
         alert(
-          'Purchase failed! ' + response.data.message
+          'Kupovina je uspešno završena.'
         )
-        return
+
+        await loadBooks()
+        await loadAccounts()
+      } else if (
+        finalStatus === 'Compensated' ||
+        finalStatus === 6
+      ) {
+        alert(
+          'Kupovina nije uspela. ' +
+          'Promene su kompenzovane.'
+        )
+      } else {
+        alert(
+          'Kupovina nije završena. Status: ' +
+          finalStatus
+        )
       }
 
-      alert('Purchase successful!')
-    } catch (err) {
-      console.error(err)
-      alert('Server error')
+      setPurchaseStatus(finalStatus)
+    } catch (error) {
+      console.error(
+        'Greška pri kupovini:',
+        error
+      )
+
+      if (error.response) {
+        const message =
+          error.response.data?.message ||
+          error.response.data
+
+        alert(
+          'Greška servera: ' + message
+        )
+      } else {
+        alert(
+          'Server nije dostupan.'
+        )
+      }
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -111,6 +269,7 @@ function App() {
     <>
       <div className="header">
         <h1>BookShop</h1>
+
         <img
           src={bookLogo}
           alt="Book logo"
@@ -118,21 +277,28 @@ function App() {
         />
       </div>
 
-      <form className="book-form" onSubmit={handleSubmit}>
+      <form
+        className="book-form"
+        onSubmit={handleSubmit}
+      >
         <div className="form-group">
-          <label htmlFor="name">Book name:</label>
+          <label htmlFor="name">
+            Book name:
+          </label>
 
           <select
             id="name"
             value={selectedBookName}
             onChange={handleBookChange}
+            disabled={isSubmitting}
           >
             {books.map((book) => (
               <option
                 key={book.bookId}
                 value={book.name}
               >
-                {book.name} (Price: {book.price} RSD,
+                {book.name} (
+                Price: {book.price} RSD,
                 Stock: {book.quantity})
               </option>
             ))}
@@ -140,7 +306,9 @@ function App() {
         </div>
 
         <div className="form-group">
-          <label htmlFor="author">Author:</label>
+          <label htmlFor="author">
+            Author:
+          </label>
 
           <input
             id="author"
@@ -151,7 +319,9 @@ function App() {
         </div>
 
         <div className="form-group">
-          <label htmlFor="quantity">Quantity:</label>
+          <label htmlFor="quantity">
+            Quantity:
+          </label>
 
           <input
             id="quantity"
@@ -159,43 +329,66 @@ function App() {
             required
             min={1}
             value={quantity}
-            onChange={(e) => setQuantity(
-              parseInt(e.target.value, 10)
-            )}
+            disabled={isSubmitting}
+            onChange={(event) => {
+              setQuantity(
+                Number.parseInt(
+                  event.target.value,
+                  10
+                )
+              )
+            }}
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="account">Account:</label>
+          <label htmlFor="account">
+            Account:
+          </label>
 
           <select
             id="account"
             value={account}
             onChange={handleAccountChange}
+            disabled={isSubmitting}
           >
-            {accountOptions.map((acc) => {
+            {accountOptions.map((customer) => {
               const accountValue =
-                acc.account || acc.Account
+                customer.account ||
+                customer.Account
 
               const balanceValue =
-                acc.balance !== undefined
-                  ? acc.balance
-                  : acc.Balance
+                customer.balance !== undefined
+                  ? customer.balance
+                  : customer.Balance
 
               return (
                 <option
                   key={accountValue}
                   value={accountValue}
                 >
-                  {accountValue} (Balance: {balanceValue} RSD)
+                  {accountValue} (
+                  Balance: {balanceValue} RSD)
                 </option>
               )
             })}
           </select>
         </div>
 
-        <button type="submit" className="button-form">
-          Submit
+        {purchaseStatus && (
+          <div className="purchase-status">
+            Status kupovine: {purchaseStatus}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          className="button-form"
+          disabled={isSubmitting}
+        >
+          {isSubmitting
+            ? 'Processing...'
+            : 'Submit'}
         </button>
       </form>
     </>

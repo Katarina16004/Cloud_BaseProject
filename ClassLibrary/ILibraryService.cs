@@ -23,6 +23,11 @@ namespace ClassLibrary
             int bookId,
             string bookName,
             int quantity);
+
+        Task ConfirmAsync(Guid txId);
+
+        Task ReleaseAsync(Guid txId);
+
         Task<ConsistencyResult> GetConsistencyAsync(
             int bookId);
     }

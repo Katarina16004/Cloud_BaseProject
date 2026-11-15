@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "ReportService": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:59810;http://localhost:59811"
+    }
+  }
+}

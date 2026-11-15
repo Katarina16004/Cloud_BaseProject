@@ -42,6 +42,8 @@
     <ProjectReference Include="..\BankService\BankService.csproj" />
     <ProjectReference Include="..\EventDispatcherService\EventDispatcherService.csproj" />
     <ProjectReference Include="..\LibraryService\LibraryService.csproj" />
+    <ProjectReference Include="..\PurchaseOrchestrator\PurchaseOrchestrator.csproj" />
+    <ProjectReference Include="..\ReportService\ReportService.csproj" />
     <ProjectReference Include="..\ValidatorService\ValidatorService.csproj">
       <ServiceLaunchUrl>http://localhost:{ServicePort}/swagger</ServiceLaunchUrl>
     </ProjectReference>
